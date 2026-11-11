@@ -6,6 +6,9 @@ Diusulkan ulang dari berkas `belajar-cara-belajar (2).html` yang Lampiran, denga
 dipertahankan dan ditambah beberapa hal: sinkronisasi Supabase, mode gelap, pencarian catatan,
 dialog konfirmasi hapus, serta state kosong/memuat/error.
 
+**Live:** https://learn-with-erashi.vercel.app
+**Kode:** https://github.com/Lyand216/learn-with-erashi
+
 ## Menjalankan
 
 ```bash
