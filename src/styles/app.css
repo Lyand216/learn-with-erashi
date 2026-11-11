@@ -1,0 +1,727 @@
+/* Token warna dan bentuk. Palet pastel + outline tebal mengikuti desain asli
+   (kartu seperti catatan tempel), dipakai juga sebagai identitas mode gelap. */
+:root {
+  --bg: #f4f1ff;
+  --dot: #d9d2f5;
+  --ink: #2b2540;
+  --note-ink: #2b2540;
+  --card: #ffffff;
+  --muted: rgba(43, 37, 64, 0.72);
+  --field: #ffffff;
+  --line: #2b2540;
+  --focus: #6b4eff;
+  --y: #ffe27a;
+  --p: #ffa6c9;
+  --m: #8de6bf;
+  --s: #95d6ff;
+  --l: #cdb4ff;
+  --o: #ffb98a;
+  --shadow-sm: 2px 2px 0 var(--line);
+  --shadow-md: 4px 4px 0 var(--line);
+  --shadow-nav: 3px 3px 0 var(--line);
+}
+
+[data-theme='dark'] {
+  --bg: #171426;
+  --dot: #2c2545;
+  --ink: #ece9ff;
+  --note-ink: #241f38;
+  --card: #221d33;
+  --muted: rgba(236, 233, 255, 0.72);
+  --field: #1b1729;
+  --line: #857cc4;
+  --focus: #b3a6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: Nunito, system-ui, sans-serif;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Baloo 2', Nunito, sans-serif;
+  line-height: 1.15;
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  color: inherit;
+}
+
+button,
+label,
+select {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* Header */
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.site-header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+}
+
+.site-header p {
+  margin: 2px 0 0;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Navigasi tab */
+.tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.tabs button {
+  font: 800 1rem Nunito, sans-serif;
+  border: 2.5px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  padding: 9px 16px;
+  border-radius: 14px 14px 4px 14px;
+  cursor: pointer;
+  box-shadow: var(--shadow-nav);
+}
+
+.tabs button[aria-selected='true'] {
+  background: var(--c, var(--y));
+  color: var(--note-ink);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--line);
+}
+
+.panel {
+  display: none;
+}
+
+.panel.on {
+  display: block;
+}
+
+/* Kartu dan tombol */
+.card {
+  background: var(--card);
+  border: 2.5px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-md);
+}
+
+.btn {
+  font: 800 0.95rem Nunito, sans-serif;
+  border: 2.5px solid var(--line);
+  background: var(--y);
+  color: var(--note-ink);
+  padding: 8px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.btn.alt {
+  background: var(--card);
+  color: var(--ink);
+}
+
+.btn.p {
+  background: var(--p);
+}
+
+.btn.m {
+  background: var(--m);
+}
+
+.btn.s {
+  background: var(--s);
+}
+
+.btn.small {
+  padding: 5px 11px;
+  font-size: 0.85rem;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  font: 600 1rem Nunito, sans-serif;
+  border: 2.5px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: var(--field);
+  color: var(--ink);
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+label {
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: block;
+  margin: 10px 0 4px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.row > * {
+  flex: 1 1 200px;
+}
+
+/* Timer */
+.timer {
+  text-align: center;
+  transition: background 0.4s;
+  color: var(--note-ink);
+}
+
+.timer.focus {
+  background: var(--p);
+}
+
+.timer.diffuse {
+  background: var(--m);
+}
+
+.time {
+  font: 800 5.5rem 'Baloo 2', sans-serif;
+  line-height: 1;
+  color: var(--note-ink);
+}
+
+.mode {
+  display: inline-flex;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.mode button {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--note-ink);
+}
+
+.mode button.on {
+  background: #fff;
+  color: var(--note-ink);
+}
+
+.hint {
+  max-width: 520px;
+  margin: 10px auto 0;
+  font-weight: 600;
+}
+
+.stat {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  align-items: center;
+}
+
+.stat span {
+  background: #fff;
+  border: 2.5px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 14px;
+  font-weight: 800;
+  color: var(--note-ink);
+}
+
+.stat select {
+  width: auto;
+}
+
+/* Catatan */
+.notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.note {
+  padding: 14px 14px 12px;
+  border: 2.5px solid var(--line);
+  border-radius: 4px 4px 16px 4px;
+  box-shadow: var(--shadow-md);
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transform: rotate(var(--r, 0deg));
+  color: var(--note-ink);
+}
+
+.note h3 {
+  font-size: 1.15rem;
+}
+
+.note p {
+  margin: 0;
+  white-space: pre-wrap;
+  flex: 1;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.note small {
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.note .acts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.note .acts button {
+  font: 800 0.78rem Nunito, sans-serif;
+  border: 2px solid var(--line);
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: var(--note-ink);
+}
+
+.note .acts button:hover {
+  background: #fff;
+}
+
+.sw {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sw input {
+  display: none;
+}
+
+.sw label {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2.5px solid var(--line);
+  margin: 0;
+  cursor: pointer;
+}
+
+.sw input:checked + label {
+  box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--line);
+}
+
+.empty {
+  text-align: center;
+  font-weight: 700;
+  opacity: 0.7;
+  padding: 26px 0;
+  grid-column: 1 / -1;
+}
+
+/* Recall */
+.fc {
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  background: var(--s);
+  color: var(--note-ink);
+}
+
+.fc .q {
+  font: 800 1.5rem 'Baloo 2', sans-serif;
+}
+
+.fc .a {
+  background: #fff;
+  border: 2.5px dashed var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: 700;
+  white-space: pre-wrap;
+  color: var(--note-ink);
+}
+
+.boxes {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 0;
+  flex-wrap: wrap;
+}
+
+.boxes span {
+  flex: 1 1 90px;
+  text-align: center;
+  border: 2.5px solid var(--line);
+  border-radius: 10px;
+  padding: 6px;
+  font-weight: 800;
+  background: var(--card);
+  color: var(--ink);
+}
+
+/* Prinsip */
+.pr {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 18px;
+}
+
+.pr .note {
+  min-height: 0;
+  transform: none;
+}
+
+.chk label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 700;
+  margin: 6px 0;
+  cursor: pointer;
+}
+
+.chk input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--focus);
+  flex: none;
+}
+
+.chip {
+  font: 800 0.85rem Nunito, sans-serif;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+
+.chip.on {
+  background: var(--l);
+  color: var(--note-ink);
+}
+
+.rm {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 12px;
+  flex-wrap: wrap;
+}
+
+.rm button {
+  background: transparent;
+  color: var(--ink);
+}
+
+.rm button.on {
+  background: var(--y);
+  color: var(--note-ink);
+}
+
+/* Kartu bertint (jurnal, ceklis, tombol) tetap memakai tinta gelap seperti desain asli */
+.card.tinted {
+  color: var(--note-ink);
+}
+
+.card.tinted .btn {
+  color: var(--note-ink);
+}
+
+.card.tinted input,
+.card.tinted textarea {
+  background: #fff;
+  color: var(--note-ink);
+}
+
+/* Lencana status penyimpanan */
+.status-pill {
+  font: 800 0.78rem Nunito, sans-serif;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 3px 12px;
+  white-space: nowrap;
+}
+
+/* Banner mode */
+.banner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  border: 2.5px dashed var(--line);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  font-weight: 700;
+  background: var(--card);
+}
+
+.banner p {
+  margin: 0;
+}
+
+.banner.warn {
+  background: var(--o);
+  color: var(--note-ink);
+}
+
+/* Toast */
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 60;
+  width: min(420px, calc(100vw - 32px));
+}
+
+.toast {
+  border: 2.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+  padding: 10px 14px;
+  font-weight: 700;
+}
+
+.toast.ok {
+  background: var(--m);
+  color: var(--note-ink);
+}
+
+.toast.bad {
+  background: var(--p);
+  color: var(--note-ink);
+}
+
+/* Dialog konfirmasi */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 20, 38, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 70;
+}
+
+.dialog {
+  background: var(--card);
+  border: 2.5px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 18px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.dialog h2 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.dialog p {
+  margin: 0 0 14px;
+  font-weight: 600;
+}
+
+.dialog .actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* State memuat */
+.skeleton {
+  border-radius: 16px;
+  border: 2.5px solid var(--line);
+  background: var(--card);
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--dot), transparent);
+  animation: sweep 1.1s linear infinite;
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Form auth */
+.auth {
+  max-width: 420px;
+  margin: 40px auto;
+}
+
+.auth .hint-line {
+  font-weight: 700;
+  opacity: 0.8;
+  margin: 0 0 10px;
+}
+
+.footer {
+  margin-top: 34px;
+  font-weight: 700;
+  opacity: 0.7;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--card);
+  border: 2.5px solid var(--line);
+  border-radius: 0 0 12px 0;
+  padding: 10px 16px;
+  font-weight: 800;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+@media (max-width: 520px) {
+  .time {
+    font-size: 4.2rem;
+  }
+
+  .site-header h1 {
+    font-size: 1.7rem;
+  }
+
+  .wrap {
+    padding: 14px 12px 48px;
+  }
+
+  .tabs button {
+    padding: 10px 12px;
+    flex: 1 1 auto;
+  }
+
+  .btn {
+    padding: 10px 16px;
+  }
+
+  .note .acts button {
+    padding: 8px 10px;
+  }
+
+  .chip {
+    padding: 7px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
