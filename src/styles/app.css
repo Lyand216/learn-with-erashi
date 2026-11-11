@@ -701,9 +701,54 @@ label {
     padding: 14px 12px 48px;
   }
 
+  /* Tab jadi grid 2x2 supaya tidak ada tombol yang sendirian melebar. */
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
   .tabs button {
-    padding: 10px 12px;
-    flex: 1 1 auto;
+    width: 100%;
+    padding: 11px 8px;
+    font-size: 0.95rem;
+  }
+
+  /* Tombol mode timer tetap satu baris teksnya. */
+  .mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mode button {
+    font-size: 0.88rem;
+    padding: 11px 6px;
+    white-space: nowrap;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions .btn {
+    padding: 9px 12px;
+    font-size: 0.85rem;
+  }
+
+  .status-pill {
+    font-size: 0.72rem;
+    padding: 3px 10px;
+  }
+
+  .banner {
+    font-size: 0.9rem;
+  }
+
+  /* Petunjuk .env disembunyikan di layar kecil, detailnya ada di README. */
+  .banner-detail {
+    display: none;
   }
 
   .btn {
@@ -716,6 +761,30 @@ label {
 
   .chip {
     padding: 7px 14px;
+  }
+
+  /* Baris ceklis jadi target sentuh yang nyaman di layar kecil. */
+  .chk label {
+    min-height: 44px;
+    padding: 8px 0;
+  }
+
+  .chk input {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Layar sangat sempit (320px): label tombol modeTimer masih muat satu baris. */
+@media (max-width: 360px) {
+  .mode button {
+    font-size: 0.8rem;
+    padding: 10px 4px;
+  }
+
+  .tabs button {
+    font-size: 0.9rem;
+    padding: 11px 6px;
   }
 }
 

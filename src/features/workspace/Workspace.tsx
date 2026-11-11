@@ -136,9 +136,13 @@ export function Workspace({
       {storeMode === 'local' ? (
         <div className="banner">
           <p>
-            Mode lokal: data tersimpan di perangkat ini. Isi <code>VITE_SUPABASE_URL</code> dan{' '}
-            <code>VITE_SUPABASE_ANON_KEY</code> di berkas <code>.env</code> lalu jalankan ulang
-            <code> npm run dev</code> untuk sinkronisasi antar perangkat.
+            Mode lokal: data tersimpan di perangkat ini.
+            <span className="banner-detail">
+              {' '}
+              Isi <code>VITE_SUPABASE_URL</code> dan <code>VITE_SUPABASE_ANON_KEY</code> di berkas{' '}
+              <code>.env</code> lalu jalankan ulang <code>npm run dev</code> untuk sinkronisasi
+              antar perangkat.
+            </span>
           </p>
         </div>
       ) : null}
