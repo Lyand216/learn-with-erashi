@@ -1,6 +1,11 @@
 node_modules
 dist
+.vercel
+
+# Rahasia: kunci Supabase dan token OIDC Vercel tidak boleh masuk repo.
 .env
-.env.local
+.env.*
+!.env.example
+
 *.local
 .DS_Store

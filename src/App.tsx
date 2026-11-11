@@ -46,11 +46,15 @@ export default function App() {
     <ToastProvider>
       <div className="wrap">
         {!authReady ? (
-          <div className="card" aria-busy="true">
-            <p style={{ fontWeight: 700, margin: 0 }}>Menyiapkan aplikasi...</p>
-          </div>
+          <main id="main">
+            <div className="card" aria-busy="true">
+              <p style={{ fontWeight: 700, margin: 0 }}>Menyiapkan aplikasi...</p>
+            </div>
+          </main>
         ) : needAuth ? (
-          <AuthScreen onUseLocal={() => setOffline(true)} />
+          <main id="main">
+            <AuthScreen onUseLocal={() => setOffline(true)} />
+          </main>
         ) : (
           <DataProvider store={cloudActive ? supabaseStore : localStore}>
             <Workspace
