@@ -38,7 +38,8 @@ export const supabaseStore: Store = {
         topic: row.topic ?? '',
         body: row.body ?? '',
         color: row.color ?? 'y',
-        date: row.note_date ?? ''
+        date: row.note_date ?? '',
+        cardId: row.card_id || undefined
       });
     }
 
@@ -120,6 +121,7 @@ export const supabaseStore: Store = {
         body: n.body,
         color: n.color,
         note_date: n.date,
+        card_id: n.cardId ?? null,
         position: index
       })),
       cards: dataset.cards.map((c, index) => ({

@@ -73,7 +73,8 @@ export function normalizeDataset(raw: unknown): Dataset {
           topic: str(n.topic, str(n.tp)),
           body: str(n.body, str(n.b)),
           color: color(n.color ?? n.c),
-          date: str(n.date, str(n.d))
+          date: str(n.date, str(n.d)),
+          cardId: str(n.cardId, str(n.card_id)) || undefined
         };
         return note;
       });

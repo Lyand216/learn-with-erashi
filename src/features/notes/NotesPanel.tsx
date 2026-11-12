@@ -96,12 +96,15 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
   };
 
   const toCard = (note: Note) => {
-    if (convertedRef.current.has(note.id)) return;
+    if (note.cardId || convertedRef.current.has(note.id)) return;
+    const cardId = uid();
     convertedRef.current.add(note.id);
     setConverted((prev) => [...prev, note.id]);
     update((draft) => {
+      const target = draft.notes.find((item) => item.id === note.id);
+      if (target) target.cardId = cardId;
       draft.cards.push({
-        id: uid(),
+        id: cardId,
         question: note.title,
         answer: note.body,
         topic: note.topic,
@@ -169,9 +172,11 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
                 <button
                   type="button"
                   onClick={() => toCard(note)}
-                  disabled={converted.includes(note.id)}
+                  disabled={Boolean(note.cardId) || converted.includes(note.id)}
                 >
-                  {converted.includes(note.id) ? 'Sudah jadi kartu' : 'Jadikan kartu'}
+                  {note.cardId || converted.includes(note.id)
+                    ? 'Sudah jadi kartu'
+                    : 'Jadikan kartu'}
                 </button>
                 <button
                   type="button"

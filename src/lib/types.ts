@@ -10,6 +10,8 @@ export interface Note {
   body: string;
   color: NoteColor;
   date: string;
+  /** Id kartu kalau catatan ini sudah diubah jadi kartu recall. */
+  cardId?: string;
 }
 
 export interface Card {
