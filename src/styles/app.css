@@ -773,6 +773,15 @@ footer p {
 
   .toasts {
     bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    left: 12px;
+    right: 12px;
+    transform: none;
+    width: auto;
+  }
+
+  /* Sisakan ruang untuk tombol mengambang supaya toast tidak menutupinya. */
+  :root[data-fab='on'] .toasts {
+    right: 84px;
   }
 
   .head-actions .btn {

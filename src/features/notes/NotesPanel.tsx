@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useData } from '../../state/useData';
 import { useToast } from '../../components/ToastProvider';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -22,6 +22,9 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
   const [editing, setEditing] = useState<Note | null>(null);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [converted, setConverted] = useState<string[]>([]);
+  // Disimpan di ref juga, supaya klik ganda tidak sempat membuat kartu kembar
+  // sebelum React sempat menggambar ulang tombolnya.
+  const convertedRef = useRef(new Set<string>());
 
   const topics = useMemo(() => {
     const list: string[] = [];
@@ -93,6 +96,9 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
   };
 
   const toCard = (note: Note) => {
+    if (convertedRef.current.has(note.id)) return;
+    convertedRef.current.add(note.id);
+    setConverted((prev) => [...prev, note.id]);
     update((draft) => {
       draft.cards.push({
         id: uid(),
@@ -104,7 +110,6 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
         due: today()
       });
     });
-    setConverted((prev) => [...prev, note.id]);
     notify('Catatan diubah jadi kartu recall.', 'ok');
   };
 
@@ -161,7 +166,11 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
               <h3>{note.title}</h3>
               <p>{note.body}</p>
               <div className="acts">
-                <button type="button" onClick={() => toCard(note)}>
+                <button
+                  type="button"
+                  onClick={() => toCard(note)}
+                  disabled={converted.includes(note.id)}
+                >
                   {converted.includes(note.id) ? 'Sudah jadi kartu' : 'Jadikan kartu'}
                 </button>
                 <button

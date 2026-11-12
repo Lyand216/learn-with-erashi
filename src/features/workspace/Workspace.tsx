@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useData } from '../../state/useData';
 import { useToast } from '../../components/ToastProvider';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -47,6 +47,12 @@ export function Workspace({
       // Hash hanya bonus navigasi, tidak wajib.
     }
   };
+
+  const fabVisible = tab === 'catatan' || tab === 'recall';
+
+  useEffect(() => {
+    document.documentElement.dataset.fab = fabVisible ? 'on' : 'off';
+  }, [fabVisible]);
 
   const onTabKeyDown = (event: React.KeyboardEvent, index: number) => {
     const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
@@ -255,7 +261,7 @@ export function Workspace({
 
           <button
             type="button"
-            className={`fab ${tab === 'catatan' || tab === 'recall' ? 'on' : ''}`}
+            className={`fab ${fabVisible ? 'on' : ''}`}
             id="fab"
             aria-label="Tambah baru"
             onClick={() => setFabRequest((prev) => prev + 1)}
