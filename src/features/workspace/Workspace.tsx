@@ -31,7 +31,7 @@ export function Workspace({
 }) {
   const { data, status, error, replaceAll, reload, storeMode, wipe } = useData();
   const { notify } = useToast();
-  const { theme, toggleTheme } = useTheme();
+  const { toggleTheme } = useTheme();
   const [tab, setTab] = useState<Tab>('fokus');
   const [pendingImport, setPendingImport] = useState<Dataset | null>(null);
   const [wipeOpen, setWipeOpen] = useState(false);
@@ -127,13 +127,7 @@ export function Workspace({
           <p>Berdasarkan ide dari buku Learning How to Learn</p>
         </div>
         <div className="head-actions">
-          <button
-            type="button"
-            className="btn alt"
-            id="thm"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
-          >
+          <button type="button" className="btn alt" id="thm" onClick={toggleTheme}>
             Tema
           </button>
           <button type="button" className="btn alt" id="exp" onClick={exportData}>

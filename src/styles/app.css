@@ -247,13 +247,16 @@ label {
   margin: 10px 0;
 }
 
+/* Tombol yang tidak aktif tetap pudar lewat latar, bukan opasitas,
+   supaya teksnya tetap terbaca. */
 .mode button {
-  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.45);
+  color: #2b2540;
 }
 
 .mode button.on {
-  opacity: 1;
   background: #fff;
+  color: #2b2540;
 }
 
 .hint {
@@ -472,11 +475,11 @@ label {
 }
 
 .rm button {
-  opacity: 0.55;
+  background: transparent;
+  color: var(--ink);
 }
 
 .rm button.on {
-  opacity: 1;
   background: var(--y);
   color: #2b2540;
 }
