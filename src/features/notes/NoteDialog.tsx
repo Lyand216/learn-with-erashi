@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '../../components/Dialog';
+import { useToast } from '../../components/ToastProvider';
 import { NOTE_COLORS, NOTE_KINDS, type Note, type NoteColor, type NoteKind } from '../../lib/types';
 
 interface NoteDialogProps {
@@ -18,6 +19,7 @@ interface NoteDialogProps {
 }
 
 export function NoteDialog({ open, note, defaultTopic, topics, onClose, onSave }: NoteDialogProps) {
+  const { notify } = useToast();
   const [title, setTitle] = useState('');
   const [kind, setKind] = useState<NoteKind>('Chunk');
   const [topic, setTopic] = useState('');
@@ -34,7 +36,10 @@ export function NoteDialog({ open, note, defaultTopic, topics, onClose, onSave }
   }, [open, note, defaultTopic]);
 
   const submit = () => {
-    if (!title.trim() && !body.trim()) return;
+    if (!title.trim() && !body.trim()) {
+      notify('Isi judul atau isi catatan dulu.', 'bad');
+      return;
+    }
     onSave({ title: title.trim(), kind, topic: topic.trim(), body: body.trim(), color });
   };
 
