@@ -87,10 +87,14 @@ export function DataProvider({ store, children }: { store: Store; children: Reac
       update,
       replaceAll,
       reload: () => void load(),
+      wipe: async () => {
+        await store.wipe();
+        window.location.reload();
+      },
       saveState,
       storeMode: store.mode
     }),
-    [status, error, data, update, replaceAll, load, saveState, store.mode]
+    [status, error, data, update, replaceAll, load, saveState, store.mode, store]
   );
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

@@ -1,31 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useData } from '../state/useData';
 
-type Theme = 'light' | 'dark';
-
-const KEY = 'lhl-theme';
-
+/**
+ * Tema terang/gelap. Kalau belum pernah dipilih, mengikuti setelan sistem
+ * (lewat aturan CSS prefers-color-scheme).
+ */
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      const saved = localStorage.getItem(KEY);
-      if (saved === 'light' || saved === 'dark') return saved;
-    } catch {
-      // localStorage diblokir, pakai preferensi sistem saja.
-    }
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
+  const { data, update } = useData();
+  const theme = data.settings.theme;
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    try {
-      localStorage.setItem(KEY, theme);
-    } catch {
-      // Menyimpan preferensi tema bukan hal kritis.
-    }
+    const root = document.documentElement;
+    if (theme) root.setAttribute('data-theme', theme);
+    else root.removeAttribute('data-theme');
   }, [theme]);
 
-  return {
-    theme,
-    toggleTheme: () => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+  const toggleTheme = () => {
+    const systemDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+    const current = theme ?? (systemDark ? 'dark' : 'light');
+    update((draft) => {
+      draft.settings.theme = current === 'dark' ? 'light' : 'dark';
+    });
   };
+
+  return { theme, toggleTheme };
 }

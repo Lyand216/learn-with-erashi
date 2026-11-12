@@ -1,45 +1,40 @@
-/* Token warna dan bentuk. Palet pastel + outline tebal mengikuti desain asli
-   (kartu seperti catatan tempel), dipakai juga sebagai identitas mode gelap. */
+/* Warna dan bentuk mengikuti berkas HTML acuan: kartu seperti catatan tempel,
+   outline tebal, bayangan keras tanpa blur. */
 :root {
   --bg: #f4f1ff;
-  --dot: #d9d2f5;
   --ink: #2b2540;
-  --note-ink: #2b2540;
-  --card: #ffffff;
-  --muted: rgba(43, 37, 64, 0.72);
-  --field: #ffffff;
-  --line: #2b2540;
-  --focus: #6b4eff;
   --y: #ffe27a;
   --p: #ffa6c9;
   --m: #8de6bf;
   --s: #95d6ff;
   --l: #cdb4ff;
   --o: #ffb98a;
-  --shadow-sm: 2px 2px 0 var(--line);
-  --shadow-md: 4px 4px 0 var(--line);
-  --shadow-nav: 3px 3px 0 var(--line);
+  --line: #2b2540;
+  --card: #fff;
+  --dot: #d9d2f5;
+  --focus: #6b4eff;
 }
 
-[data-theme='dark'] {
-  --bg: #171426;
-  --dot: #2c2545;
-  --ink: #ece9ff;
-  --note-ink: #241f38;
-  --card: #221d33;
-  --muted: rgba(236, 233, 255, 0.72);
-  --field: #1b1729;
-  --line: #857cc4;
-  --focus: #b3a6ff;
+:root[data-theme='dark'] {
+  --bg: #17141f;
+  --ink: #f1eefc;
+  --card: #262136;
+  --line: #8f84c4;
+  --dot: #2a2540;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #17141f;
+    --ink: #f1eefc;
+    --card: #262136;
+    --line: #8f84c4;
+    --dot: #2a2540;
+  }
 }
 
 * {
   box-sizing: border-box;
-}
-
-html,
-body {
-  height: 100%;
 }
 
 body {
@@ -50,7 +45,6 @@ body {
   color: var(--ink);
   font-family: Nunito, system-ui, sans-serif;
   line-height: 1.55;
-  -webkit-text-size-adjust: 100%;
 }
 
 h1,
@@ -92,7 +86,7 @@ button:disabled {
 }
 
 /* Header */
-.site-header {
+header {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -101,33 +95,32 @@ button:disabled {
   margin-bottom: 18px;
 }
 
-.site-header h1 {
+header h1 {
   font-size: 2.2rem;
   font-weight: 800;
 }
 
-.site-header p {
+header p {
   margin: 2px 0 0;
   font-weight: 600;
   opacity: 0.75;
 }
 
-.header-actions {
+.head-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  align-items: center;
 }
 
 /* Navigasi tab */
-.tabs {
+nav {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 22px;
 }
 
-.tabs button {
+nav button {
   font: 800 1rem Nunito, sans-serif;
   border: 2.5px solid var(--line);
   background: var(--card);
@@ -135,12 +128,12 @@ button:disabled {
   padding: 9px 16px;
   border-radius: 14px 14px 4px 14px;
   cursor: pointer;
-  box-shadow: var(--shadow-nav);
+  box-shadow: 3px 3px 0 var(--line);
 }
 
-.tabs button[aria-selected='true'] {
+nav button[aria-selected='true'] {
   background: var(--c, var(--y));
-  color: var(--note-ink);
+  color: #2b2540;
   transform: translate(2px, 2px);
   box-shadow: 1px 1px 0 var(--line);
 }
@@ -159,18 +152,18 @@ button:disabled {
   border: 2.5px solid var(--line);
   border-radius: 16px;
   padding: 18px;
-  box-shadow: var(--shadow-md);
+  box-shadow: 4px 4px 0 var(--line);
 }
 
 .btn {
   font: 800 0.95rem Nunito, sans-serif;
   border: 2.5px solid var(--line);
   background: var(--y);
-  color: var(--note-ink);
+  color: #2b2540;
   padding: 8px 16px;
   border-radius: 12px;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 2px 2px 0 var(--line);
 }
 
 .btn:active {
@@ -195,11 +188,6 @@ button:disabled {
   background: var(--s);
 }
 
-.btn.small {
-  padding: 5px 11px;
-  font-size: 0.85rem;
-}
-
 input,
 textarea,
 select {
@@ -208,7 +196,7 @@ select {
   border: 2.5px solid var(--line);
   border-radius: 10px;
   padding: 9px 11px;
-  background: var(--field);
+  background: var(--card);
   color: var(--ink);
 }
 
@@ -238,7 +226,6 @@ label {
 .timer {
   text-align: center;
   transition: background 0.4s;
-  color: var(--note-ink);
 }
 
 .timer.focus {
@@ -252,7 +239,6 @@ label {
 .time {
   font: 800 5.5rem 'Baloo 2', sans-serif;
   line-height: 1;
-  color: var(--note-ink);
 }
 
 .mode {
@@ -262,13 +248,12 @@ label {
 }
 
 .mode button {
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--note-ink);
+  opacity: 0.55;
 }
 
 .mode button.on {
+  opacity: 1;
   background: #fff;
-  color: var(--note-ink);
 }
 
 .hint {
@@ -283,20 +268,15 @@ label {
   justify-content: center;
   flex-wrap: wrap;
   margin-top: 14px;
-  align-items: center;
 }
 
 .stat span {
   background: #fff;
+  color: #2b2540;
   border: 2.5px solid var(--line);
   border-radius: 999px;
   padding: 3px 14px;
   font-weight: 800;
-  color: var(--note-ink);
-}
-
-.stat select {
-  width: auto;
 }
 
 /* Catatan */
@@ -311,13 +291,12 @@ label {
   padding: 14px 14px 12px;
   border: 2.5px solid var(--line);
   border-radius: 4px 4px 16px 4px;
-  box-shadow: var(--shadow-md);
+  box-shadow: 4px 4px 0 var(--line);
   min-height: 170px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   transform: rotate(var(--r, 0deg));
-  color: var(--note-ink);
 }
 
 .note h3 {
@@ -334,7 +313,7 @@ label {
 
 .note small {
   font-weight: 800;
-  opacity: 0.85;
+  opacity: 0.7;
 }
 
 .note .acts {
@@ -350,7 +329,7 @@ label {
   border-radius: 8px;
   padding: 3px 8px;
   cursor: pointer;
-  color: var(--note-ink);
+  color: #2b2540;
 }
 
 .note .acts button:hover {
@@ -377,7 +356,7 @@ label {
 }
 
 .sw input:checked + label {
-  box-shadow: 0 0 0 3px var(--card), 0 0 0 6px var(--line);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--line);
 }
 
 .empty {
@@ -397,7 +376,6 @@ label {
   text-align: center;
   gap: 12px;
   background: var(--s);
-  color: var(--note-ink);
 }
 
 .fc .q {
@@ -406,12 +384,12 @@ label {
 
 .fc .a {
   background: #fff;
+  color: #2b2540;
   border: 2.5px dashed var(--line);
   border-radius: 12px;
   padding: 10px;
   font-weight: 700;
   white-space: pre-wrap;
-  color: var(--note-ink);
 }
 
 .boxes {
@@ -429,7 +407,6 @@ label {
   padding: 6px;
   font-weight: 800;
   background: var(--card);
-  color: var(--ink);
 }
 
 /* Prinsip */
@@ -444,6 +421,7 @@ label {
   transform: none;
 }
 
+/* Ceklis */
 .chk label {
   display: flex;
   gap: 10px;
@@ -453,11 +431,22 @@ label {
   cursor: pointer;
 }
 
-.chk input {
+.chk input[type='checkbox'] {
   width: 22px;
   height: 22px;
-  accent-color: var(--focus);
+  accent-color: #6b4eff;
   flex: none;
+}
+
+.chk-edit {
+  display: flex;
+  gap: 8px;
+  margin: 6px 0;
+  align-items: center;
+}
+
+.chk-edit input {
+  flex: 1;
 }
 
 .chip {
@@ -472,7 +461,7 @@ label {
 
 .chip.on {
   background: var(--l);
-  color: var(--note-ink);
+  color: #2b2540;
 }
 
 .rm {
@@ -483,63 +472,128 @@ label {
 }
 
 .rm button {
-  background: transparent;
-  color: var(--ink);
+  opacity: 0.55;
 }
 
 .rm button.on {
+  opacity: 1;
   background: var(--y);
-  color: var(--note-ink);
+  color: #2b2540;
 }
 
-/* Kartu bertint (jurnal, ceklis, tombol) tetap memakai tinta gelap seperti desain asli */
-.card.tinted {
-  color: var(--note-ink);
+/* Kartu yang warnanya seperti kertas tempel selalu memakai tinta gelap */
+.note,
+.timer,
+.fc,
+.chk,
+#welcome,
+#jcard {
+  color: #2b2540;
 }
 
-.card.tinted .btn {
-  color: var(--note-ink);
+/* Toolbar, dialog, dan tombol melayang */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-.card.tinted input,
-.card.tinted textarea {
-  background: #fff;
-  color: var(--note-ink);
+.toolbar input {
+  flex: 1 1 180px;
+  width: auto;
 }
 
-/* Lencana status penyimpanan */
-.status-pill {
-  font: 800 0.78rem Nunito, sans-serif;
-  border: 2px solid var(--line);
+.dlg {
+  border: 2.5px solid var(--line);
+  border-radius: 16px;
   background: var(--card);
   color: var(--ink);
-  border-radius: 999px;
-  padding: 3px 12px;
-  white-space: nowrap;
+  box-shadow: 5px 5px 0 var(--line);
+  width: calc(100% - 32px);
+  max-width: 520px;
+  padding: 18px;
 }
 
-/* Banner mode */
-.banner {
+.dlg::backdrop {
+  background: rgba(20, 16, 35, 0.55);
+}
+
+.dact {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.fab {
+  display: none;
+  position: fixed;
+  right: 16px;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font: 800 2rem Nunito, sans-serif;
+  line-height: 1;
+  border: 2.5px solid var(--line);
+  background: var(--y);
+  color: #2b2540;
+  box-shadow: 3px 3px 0 var(--line);
+  z-index: 8;
+  cursor: pointer;
+}
+
+/* Statistik progres */
+.bars {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.bar-day {
+  flex: 1;
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+}
+
+.bar-col {
+  height: 120px;
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bar {
+  width: 40%;
+  border: 2px solid var(--line);
+  border-radius: 6px 6px 0 0;
+}
+
+.bar.focus {
+  background: var(--p);
+}
+
+.bar.review {
+  background: var(--s);
+}
+
+/* Daftar semua kartu */
+.clist-row {
+  border-top: 2.5px dashed var(--line);
+  padding: 8px 0;
+  display: flex;
+  gap: 8px;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  border: 2.5px dashed var(--line);
-  border-radius: 14px;
-  padding: 10px 14px;
-  margin-bottom: 18px;
+}
+
+.clist-row span:first-child {
   font-weight: 700;
-  background: var(--card);
-}
-
-.banner p {
-  margin: 0;
-}
-
-.banner.warn {
-  background: var(--o);
-  color: var(--note-ink);
+  flex: 1 1 200px;
 }
 
 /* Toast */
@@ -559,26 +613,26 @@ label {
   border: 2.5px solid var(--line);
   border-radius: 14px;
   background: var(--card);
-  box-shadow: var(--shadow-md);
+  box-shadow: 4px 4px 0 var(--line);
   padding: 10px 14px;
   font-weight: 700;
 }
 
 .toast.ok {
   background: var(--m);
-  color: var(--note-ink);
+  color: #2b2540;
 }
 
 .toast.bad {
   background: var(--p);
-  color: var(--note-ink);
+  color: #2b2540;
 }
 
 /* Dialog konfirmasi */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(23, 20, 38, 0.55);
+  background: rgba(20, 16, 35, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -590,10 +644,11 @@ label {
   background: var(--card);
   border: 2.5px solid var(--line);
   border-radius: 16px;
-  box-shadow: var(--shadow-md);
+  box-shadow: 5px 5px 0 var(--line);
   padding: 18px;
   max-width: 420px;
   width: 100%;
+  color: var(--ink);
 }
 
 .dialog h2 {
@@ -640,26 +695,7 @@ label {
   }
 }
 
-/* Form auth */
-.auth {
-  max-width: 420px;
-  margin: 40px auto;
-}
-
-.auth .hint-line {
-  font-weight: 700;
-  opacity: 0.8;
-  margin: 0 0 10px;
-}
-
-.footer {
-  margin-top: 34px;
-  font-weight: 700;
-  opacity: 0.7;
-  font-size: 0.9rem;
-  text-align: center;
-}
-
+/* Konten yang hanya dibaca screen reader */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -688,33 +724,73 @@ label {
   left: 0;
 }
 
+footer {
+  margin-top: 34px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+footer p {
+  margin: 4px 0;
+}
+
+@media (max-width: 640px) {
+  /* Navigasi pindah ke bawah, ibu jari lebih mudah menjangkau */
+  nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg);
+    border-top: 2.5px solid var(--line);
+    z-index: 9;
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+
+  nav button {
+    flex: 1;
+    padding: 8px 2px;
+    font-size: 0.78rem;
+    box-shadow: none;
+    border-radius: 12px;
+  }
+
+  .wrap {
+    padding-bottom: 100px;
+  }
+
+  .fab.on {
+    display: block;
+  }
+
+  .toasts {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .head-actions .btn {
+    padding: 9px 12px;
+    font-size: 0.85rem;
+  }
+}
+
 @media (max-width: 520px) {
   .time {
     font-size: 4.2rem;
   }
 
-  .site-header h1 {
+  header h1 {
     font-size: 1.7rem;
   }
 
   .wrap {
-    padding: 14px 12px 48px;
+    padding: 14px 12px 100px;
   }
 
-  /* Tab jadi grid 2x2 supaya tidak ada tombol yang sendirian melebar. */
-  .tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .tabs button {
-    width: 100%;
-    padding: 11px 8px;
-    font-size: 0.95rem;
-  }
-
-  /* Tombol mode timer tetap satu baris teksnya. */
   .mode {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -723,32 +799,9 @@ label {
   }
 
   .mode button {
-    font-size: 0.88rem;
-    padding: 11px 6px;
-    white-space: nowrap;
-  }
-
-  .header-actions {
-    width: 100%;
-  }
-
-  .header-actions .btn {
-    padding: 9px 12px;
     font-size: 0.85rem;
-  }
-
-  .status-pill {
-    font-size: 0.72rem;
-    padding: 3px 10px;
-  }
-
-  .banner {
-    font-size: 0.9rem;
-  }
-
-  /* Petunjuk .env disembunyikan di layar kecil, detailnya ada di README. */
-  .banner-detail {
-    display: none;
+    padding: 11px 4px;
+    white-space: nowrap;
   }
 
   .btn {
@@ -763,28 +816,21 @@ label {
     padding: 7px 14px;
   }
 
-  /* Baris ceklis jadi target sentuh yang nyaman di layar kecil. */
   .chk label {
     min-height: 44px;
     padding: 8px 0;
   }
 
-  .chk input {
+  .chk input[type='checkbox'] {
     width: 24px;
     height: 24px;
   }
 }
 
-/* Layar sangat sempit (320px): label tombol modeTimer masih muat satu baris. */
 @media (max-width: 360px) {
   .mode button {
     font-size: 0.8rem;
-    padding: 10px 4px;
-  }
-
-  .tabs button {
-    font-size: 0.9rem;
-    padding: 11px 6px;
+    padding: 10px 2px;
   }
 }
 

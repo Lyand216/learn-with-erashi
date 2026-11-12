@@ -11,16 +11,21 @@ export const supabaseStore: Store = {
   mode: 'cloud',
   async load() {
     const client = requireClient();
-    const [notes, cards, sessions, journal, checklist, settings] = await Promise.all([
-      client.from('notes').select('*').order('position', { ascending: true }),
-      client.from('cards').select('*').order('position', { ascending: true }),
-      client.from('focus_sessions').select('*').order('position', { ascending: true }),
-      client.from('journal').select('*').order('position', { ascending: true }),
-      client.from('checklist').select('day,item_id,done'),
-      client.from('settings').select('focus_minutes,diffuse_minutes').maybeSingle()
-    ]);
+    const [notes, cards, sessions, reviews, journal, checklist, checklistItems, settings] =
+      await Promise.all([
+        client.from('notes').select('*').order('position', { ascending: true }),
+        client.from('cards').select('*').order('position', { ascending: true }),
+        client.from('focus_sessions').select('*').order('position', { ascending: true }),
+        client.from('reviews').select('*').order('created_at', { ascending: false }),
+        client.from('journal').select('*').order('position', { ascending: true }),
+        client.from('checklist').select('day,item_id,done'),
+        client.from('checklist_items').select('item_id,text,position').order('position'),
+        client.from('settings').select('focus_minutes,diffuse_minutes,theme,seen').maybeSingle()
+      ]);
 
-    const firstError = [notes, cards, sessions, journal, checklist, settings].find((r) => r.error);
+    const firstError = [notes, cards, sessions, reviews, journal, checklist, checklistItems, settings].find(
+      (r) => r.error
+    );
     if (firstError?.error) throw firstError.error;
 
     const data = emptyDataset();
@@ -60,6 +65,14 @@ export const supabaseStore: Store = {
       });
     }
 
+    for (const row of reviews.data ?? []) {
+      data.reviews.push({
+        id: row.id,
+        day: row.day ?? '',
+        createdAt: row.created_at ?? ''
+      });
+    }
+
     for (const row of journal.data ?? []) {
       data.journal.push({
         id: row.id,
@@ -78,10 +91,18 @@ export const supabaseStore: Store = {
       data.checklist[row.day] = record;
     }
 
+    const items = (checklistItems.data ?? []).map((row) => ({
+      id: row.item_id,
+      text: row.text ?? ''
+    }));
+    if (items.length) data.checklistItems = items;
+
     if (settings.data) {
       data.settings = {
         focusMinutes: settings.data.focus_minutes ?? 25,
-        diffuseMinutes: settings.data.diffuse_minutes ?? 5
+        diffuseMinutes: settings.data.diffuse_minutes ?? 5,
+        theme: settings.data.theme === 'light' || settings.data.theme === 'dark' ? settings.data.theme : null,
+        seen: Boolean(settings.data.seen)
       };
     }
 
@@ -119,6 +140,11 @@ export const supabaseStore: Store = {
         topic: s.topic,
         position: index
       })),
+      reviews: dataset.reviews.map((r, index) => ({
+        id: r.id,
+        day: r.day,
+        position: index
+      })),
       journal: dataset.journal.map((j, index) => ({
         id: j.id,
         day: j.day,
@@ -128,13 +154,26 @@ export const supabaseStore: Store = {
         position: index
       })),
       checklist: dataset.checklist,
+      checklist_items: dataset.checklistItems.map((item, index) => ({
+        item_id: item.id,
+        text: item.text,
+        position: index
+      })),
       settings: {
         focus_minutes: dataset.settings.focusMinutes,
-        diffuse_minutes: dataset.settings.diffuseMinutes
+        diffuse_minutes: dataset.settings.diffuseMinutes,
+        theme: dataset.settings.theme,
+        seen: dataset.settings.seen
       }
     };
 
     const { error } = await client.rpc('save_dataset', { payload });
+    if (error) throw error;
+  },
+
+  async wipe() {
+    const client = requireClient();
+    const { error } = await client.rpc('wipe_dataset');
     if (error) throw error;
   }
 };

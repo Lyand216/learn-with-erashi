@@ -5,18 +5,20 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { FocusPanel } from '../focus/FocusPanel';
 import { NotesPanel } from '../notes/NotesPanel';
 import { RecallPanel } from '../recall/RecallPanel';
+import { ProgressPanel } from '../progress/ProgressPanel';
 import { PrinciplesPanel } from '../principles/PrinciplesPanel';
 import { normalizeDataset } from '../../lib/storage/local';
 import { today } from '../../lib/date';
 import { useTheme } from '../../lib/useTheme';
 import type { Dataset } from '../../lib/types';
 
-type Tab = 'fokus' | 'catatan' | 'recall' | 'prinsip';
+type Tab = 'fokus' | 'catatan' | 'recall' | 'progres' | 'prinsip';
 
 const TABS: Array<{ id: Tab; label: string; color: string }> = [
-  { id: 'fokus', label: 'Fokus & santai', color: 'var(--p)' },
+  { id: 'fokus', label: 'Fokus', color: 'var(--p)' },
   { id: 'catatan', label: 'Catatan', color: 'var(--y)' },
   { id: 'recall', label: 'Recall', color: 'var(--s)' },
+  { id: 'progres', label: 'Progres', color: 'var(--o)' },
   { id: 'prinsip', label: 'Prinsip', color: 'var(--m)' }
 ];
 
@@ -27,11 +29,14 @@ export function Workspace({
   onSignOut?: () => void;
   onUseLocal?: () => void;
 }) {
-  const { data, status, error, replaceAll, reload, saveState, storeMode } = useData();
+  const { data, status, error, replaceAll, reload, storeMode, wipe } = useData();
   const { notify } = useToast();
   const { theme, toggleTheme } = useTheme();
   const [tab, setTab] = useState<Tab>('fokus');
   const [pendingImport, setPendingImport] = useState<Dataset | null>(null);
+  const [wipeOpen, setWipeOpen] = useState(false);
+  const [fabRequest, setFabRequest] = useState(0);
+  const navRef = useRef<HTMLElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const openTab = (next: Tab) => {
@@ -41,6 +46,15 @@ export function Workspace({
     } catch {
       // Hash hanya bonus navigasi, tidak wajib.
     }
+  };
+
+  const onTabKeyDown = (event: React.KeyboardEvent, index: number) => {
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (!step) return;
+    event.preventDefault();
+    const next = TABS[(index + step + TABS.length) % TABS.length];
+    openTab(next.id);
+    navRef.current?.querySelectorAll('button')[TABS.indexOf(next)]?.focus();
   };
 
   const exportData = () => {
@@ -80,31 +94,52 @@ export function Workspace({
     notify('Data dipulihkan.', 'ok');
   };
 
+  const wipeAll = () => {
+    setWipeOpen(false);
+    void (async () => {
+      try {
+        await wipe();
+      } catch (err) {
+        notify(
+          `Gagal menghapus: ${err instanceof Error ? err.message : 'koneksi bermasalah'}`,
+          'bad'
+        );
+      }
+    })();
+  };
+
   const saveLabel =
-    saveState === 'saving'
-      ? 'Menyimpan...'
-      : saveState === 'error'
-        ? 'Gagal menyimpan'
-        : storeMode === 'cloud'
-          ? 'Tersimpan di cloud'
-          : 'Tersimpan di perangkat';
+    status === 'ready'
+      ? storeMode === 'cloud'
+        ? 'Tersimpan di cloud'
+        : 'Tersimpan di perangkat'
+      : '';
 
   return (
     <>
       <a className="skip-link" href="#main">
         Lompat ke konten utama
       </a>
-      <header className="site-header">
+
+      <header>
         <div>
           <h1>Learn with Erashi</h1>
           <p>Berdasarkan ide dari buku Learning How to Learn</p>
         </div>
-        <div className="header-actions">
-          <span className="status-pill">{saveLabel}</span>
-          <button type="button" className="btn alt" onClick={exportData}>
+        <div className="head-actions">
+          <button
+            type="button"
+            className="btn alt"
+            id="thm"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}
+          >
+            Tema
+          </button>
+          <button type="button" className="btn alt" id="exp" onClick={exportData}>
             Cadangkan data
           </button>
-          <button type="button" className="btn alt" onClick={() => fileRef.current?.click()}>
+          <button type="button" className="btn alt" id="imp" onClick={() => fileRef.current?.click()}>
             Pulihkan data
           </button>
           <input
@@ -117,14 +152,6 @@ export function Workspace({
               event.target.value = '';
             }}
           />
-          <button
-            type="button"
-            className="btn alt"
-            onClick={toggleTheme}
-            aria-label={theme === 'light' ? 'Ganti ke mode gelap' : 'Ganti ke mode terang'}
-          >
-            {theme === 'light' ? 'Mode gelap' : 'Mode terang'}
-          </button>
           {onSignOut ? (
             <button type="button" className="btn alt" onClick={onSignOut}>
               Keluar
@@ -133,46 +160,36 @@ export function Workspace({
         </div>
       </header>
 
-      {storeMode === 'local' ? (
-        <div className="banner">
-          <p>
-            Mode lokal: data tersimpan di perangkat ini.
-            <span className="banner-detail">
-              {' '}
-              Isi <code>VITE_SUPABASE_URL</code> dan <code>VITE_SUPABASE_ANON_KEY</code> di berkas{' '}
-              <code>.env</code> lalu jalankan ulang <code>npm run dev</code> untuk sinkronisasi
-              antar perangkat.
-            </span>
-          </p>
-        </div>
-      ) : null}
-
       {status === 'loading' ? (
-        <div className="notes" aria-busy="true" aria-live="polite">
-          <span className="sr-only">Memuat data...</span>
-          <div className="skeleton" />
-          <div className="skeleton" />
-          <div className="skeleton" />
-        </div>
+        <main id="main">
+          <div className="notes" aria-busy="true">
+            <span className="sr-only">Memuat data...</span>
+            <div className="skeleton" />
+            <div className="skeleton" />
+            <div className="skeleton" />
+          </div>
+        </main>
       ) : status === 'error' ? (
-        <div className="card" role="alert">
-          <h3>Data belum bisa dimuat</h3>
-          <p style={{ fontWeight: 700 }}>{error}</p>
-          <p>
-            <button type="button" className="btn" onClick={reload}>
-              Coba lagi
-            </button>
-            {onUseLocal ? (
-              <button type="button" className="btn alt" onClick={onUseLocal}>
-                Lanjut pakai mode lokal
+        <main id="main">
+          <div className="card" role="alert">
+            <h3>Data belum bisa dimuat</h3>
+            <p style={{ fontWeight: 700 }}>{error}</p>
+            <p>
+              <button type="button" className="btn" onClick={reload}>
+                Coba lagi
               </button>
-            ) : null}
-          </p>
-        </div>
+              {onUseLocal ? (
+                <button type="button" className="btn alt" onClick={onUseLocal}>
+                  Lanjut pakai mode lokal
+                </button>
+              ) : null}
+            </p>
+          </div>
+        </main>
       ) : (
         <>
-          <nav className="tabs" role="tablist" aria-label="Bagian aplikasi">
-            {TABS.map((item) => (
+          <nav role="tablist" aria-label="Bagian aplikasi" ref={navRef}>
+            {TABS.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
@@ -183,6 +200,7 @@ export function Workspace({
                 data-t={item.id}
                 style={{ ['--c' as string]: item.color }}
                 onClick={() => openTab(item.id)}
+                onKeyDown={(event) => onTabKeyDown(event, index)}
               >
                 {item.label}
               </button>
@@ -196,9 +214,10 @@ export function Workspace({
               role="tabpanel"
               aria-labelledby="tab-fokus"
             >
-              <h2 className="sr-only">Fokus &amp; santai</h2>
-              <FocusPanel onGoToNotes={() => openTab('catatan')} />
+              <h2 className="sr-only">Fokus</h2>
+              <FocusPanel />
             </section>
+
             <section
               className={`panel ${tab === 'catatan' ? 'on' : ''}`}
               id="panel-catatan"
@@ -206,8 +225,9 @@ export function Workspace({
               aria-labelledby="tab-catatan"
             >
               <h2 className="sr-only">Catatan</h2>
-              <NotesPanel />
+              <NotesPanel fabRequest={fabRequest} onFabHandled={() => setFabRequest(0)} />
             </section>
+
             <section
               className={`panel ${tab === 'recall' ? 'on' : ''}`}
               id="panel-recall"
@@ -215,8 +235,19 @@ export function Workspace({
               aria-labelledby="tab-recall"
             >
               <h2 className="sr-only">Recall</h2>
-              <RecallPanel />
+              <RecallPanel fabRequest={fabRequest} onFabHandled={() => setFabRequest(0)} />
             </section>
+
+            <section
+              className={`panel ${tab === 'progres' ? 'on' : ''}`}
+              id="panel-progres"
+              role="tabpanel"
+              aria-labelledby="tab-progres"
+            >
+              <h2 className="sr-only">Progres</h2>
+              <ProgressPanel />
+            </section>
+
             <section
               className={`panel ${tab === 'prinsip' ? 'on' : ''}`}
               id="panel-prinsip"
@@ -228,10 +259,32 @@ export function Workspace({
             </section>
           </main>
 
-          <footer className="footer">
-            {storeMode === 'cloud'
-              ? 'Data tersimpan otomatis di akun Supabase-mu.'
-              : 'Data tersimpan otomatis di perangkat ini. Pakai "Cadangkan data" untuk menyimpan salinan sebagai file JSON.'}
+          <button
+            type="button"
+            className={`fab ${tab === 'catatan' || tab === 'recall' ? 'on' : ''}`}
+            id="fab"
+            aria-label="Tambah baru"
+            onClick={() => setFabRequest((prev) => prev + 1)}
+          >
+            +
+          </button>
+
+          <footer>
+            <p>
+              Terinspirasi dari <i>Learning How to Learn</i> (Barbara Oakley &amp; Terrence Sejnowski).
+              Bukan produk resmi.
+            </p>
+            <p>
+              {storeMode === 'cloud'
+                ? 'Datamu tersimpan di akun Supabase-mu.'
+                : 'Datamu tidak dikirim ke server mana pun.'}{' '}
+              {saveLabel ? `· ${saveLabel}` : ''}
+            </p>
+            <p>
+              <button type="button" className="chip" id="wipe" onClick={() => setWipeOpen(true)}>
+                Hapus semua data
+              </button>
+            </p>
           </footer>
         </>
       )}
@@ -243,6 +296,15 @@ export function Workspace({
         confirmLabel="Ya, pulihkan"
         onCancel={() => setPendingImport(null)}
         onConfirm={applyImport}
+      />
+
+      <ConfirmDialog
+        open={wipeOpen}
+        title="Hapus semua data?"
+        message="Catatan, kartu, jurnal, dan statistik akan dihapus permanen. Sebaiknya cadangkan data dulu."
+        confirmLabel="Ya, hapus semua"
+        onCancel={() => setWipeOpen(false)}
+        onConfirm={wipeAll}
       />
     </>
   );

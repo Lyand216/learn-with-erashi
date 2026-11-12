@@ -1,5 +1,15 @@
-import type { Card, Dataset, JournalEntry, Note, NoteColor, NoteKind, Store } from '../types';
-import { CHECKLIST_ITEMS, NOTE_COLORS } from '../types';
+import type {
+  Card,
+  Dataset,
+  JournalEntry,
+  Note,
+  NoteColor,
+  NoteKind,
+  ReviewRecord,
+  Store,
+  Theme
+} from '../types';
+import { DEFAULT_CHECKLIST, LEGACY_CHECKLIST_IDS, NOTE_COLORS } from '../types';
 
 const KEY = 'lhl-v2';
 const LEGACY_KEY = 'lhl';
@@ -8,9 +18,11 @@ export const emptyDataset = (): Dataset => ({
   notes: [],
   cards: [],
   sessions: [],
+  reviews: [],
   journal: [],
   checklist: {},
-  settings: { focusMinutes: 25, diffuseMinutes: 5 }
+  checklistItems: DEFAULT_CHECKLIST.map((item) => ({ ...item })),
+  settings: { focusMinutes: 25, diffuseMinutes: 5, theme: null, seen: false }
 });
 
 function str(value: unknown, fallback = ''): string {
@@ -19,6 +31,10 @@ function str(value: unknown, fallback = ''): string {
 
 function num(value: unknown, fallback = 0): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function bool(value: unknown): boolean {
+  return value === true || value === 1;
 }
 
 function color(value: unknown): NoteColor {
@@ -30,7 +46,17 @@ function kind(value: unknown): NoteKind {
   return typeof value === 'string' && allowed.includes(value as NoteKind) ? (value as NoteKind) : 'Chunk';
 }
 
-/** Menerima data versi baru maupun data versi file HTML lama (lama: t/k/b/c/d/tp). */
+function theme(value: unknown): Theme | null {
+  return value === 'light' || value === 'dark' ? value : null;
+}
+
+/** Id item ceklis lama (angka atau nama tetap) dipetakan ke id baru d0..d4. */
+function checklistItemId(key: string): string {
+  if (/^\d+$/.test(key)) return `d${key}`;
+  return LEGACY_CHECKLIST_IDS[key] ?? key;
+}
+
+/** Menerima data versi baru maupun data dari file HTML lama (lama: t/k/b/c/d/tp). */
 export function normalizeDataset(raw: unknown): Dataset {
   const data = emptyDataset();
   if (!raw || typeof raw !== 'object') return data;
@@ -97,6 +123,29 @@ export function normalizeDataset(raw: unknown): Dataset {
     }
   }
 
+  if (Array.isArray(src.reviews)) {
+    data.reviews = src.reviews
+      .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
+      .map((r) => {
+        const review: ReviewRecord = {
+          id: str(r.id) || `r${Math.random().toString(36).slice(2, 10)}`,
+          day: str(r.day),
+          createdAt: str(r.createdAt, str(r.created_at))
+        };
+        return review;
+      });
+  } else if (src.rev && typeof src.rev === 'object') {
+    for (const [day, count] of Object.entries(src.rev as Record<string, unknown>)) {
+      for (let i = 0; i < num(count); i += 1) {
+        data.reviews.push({
+          id: `legacy-rev-${day}-${i}`,
+          day,
+          createdAt: ''
+        });
+      }
+    }
+  }
+
   if (Array.isArray(src.journal)) {
     data.journal = src.journal
       .filter((j): j is Record<string, unknown> => !!j && typeof j === 'object')
@@ -124,27 +173,44 @@ export function normalizeDataset(raw: unknown): Dataset {
     if (!items || typeof items !== 'object') continue;
     const record: Record<string, boolean> = {};
     for (const [key, value] of Object.entries(items as Record<string, unknown>)) {
-      if (value !== true) continue;
-      // Data lama memakai nomor urut item, data baru memakai id item.
-      const itemId = legacyChecklist ? CHECKLIST_ITEMS[Number(key)]?.id : key;
-      if (itemId) record[itemId] = true;
+      if (!bool(value)) continue;
+      const id = legacyChecklist ? checklistItemId(key) : LEGACY_CHECKLIST_IDS[key] ?? key;
+      record[id] = true;
     }
     data.checklist[day] = record;
+  }
+
+  if (Array.isArray(src.checklistItems)) {
+    const items = src.checklistItems
+      .filter((c): c is Record<string, unknown> => !!c && typeof c === 'object')
+      .map((c) => ({
+        id: str(c.id) || `d${Math.random().toString(36).slice(2, 10)}`,
+        text: str(c.text, str(c.t))
+      }));
+    if (items.length) data.checklistItems = items;
+  } else if (Array.isArray(src.cl)) {
+    const items = src.cl
+      .filter((c): c is Record<string, unknown> => !!c && typeof c === 'object')
+      .map((c) => ({ id: str(c.id), text: str(c.t) }));
+    if (items.length) data.checklistItems = items;
   }
 
   const settings = src.settings as Record<string, unknown> | undefined;
   if (settings) {
     data.settings = {
       focusMinutes: num(settings.focusMinutes, data.settings.focusMinutes) || 25,
-      diffuseMinutes: num(settings.diffuseMinutes, data.settings.diffuseMinutes) || 5
+      diffuseMinutes: num(settings.diffuseMinutes, data.settings.diffuseMinutes) || 5,
+      theme: theme(settings.theme),
+      seen: bool(settings.seen)
     };
   } else if (typeof src.pst === 'string' && src.pst.includes(',')) {
     const [focus, diffuse] = src.pst.split(',').map((v) => num(v));
-    data.settings = {
-      focusMinutes: focus || 25,
-      diffuseMinutes: diffuse || 5
-    };
+    data.settings.focusMinutes = focus || 25;
+    data.settings.diffuseMinutes = diffuse || 5;
   }
+
+  data.settings.theme = theme(src.theme) ?? data.settings.theme;
+  data.settings.seen = bool(src.seen) || data.settings.seen;
 
   return data;
 }
@@ -168,5 +234,9 @@ export const localStore: Store = {
   },
   async save(dataset) {
     localStorage.setItem(KEY, JSON.stringify(dataset));
+  },
+  async wipe() {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem(LEGACY_KEY);
   }
 };

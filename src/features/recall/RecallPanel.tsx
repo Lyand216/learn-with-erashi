@@ -2,13 +2,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { useData } from '../../state/useData';
 import { useToast } from '../../components/ToastProvider';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { CardDialog } from './CardDialog';
 import { addDays, today } from '../../lib/date';
 import { uid } from '../../lib/id';
-import { BOX_GAPS } from '../../lib/types';
+import { BOX_GAPS, type Card } from '../../lib/types';
 
 type DeckMode = 'due' | 'hard' | 'mix';
 
-export function RecallPanel() {
+interface RecallPanelProps {
+  fabRequest: number;
+  onFabHandled: () => void;
+}
+
+export function RecallPanel({ fabRequest, onFabHandled }: RecallPanelProps) {
   const { data, update } = useData();
   const { notify } = useToast();
 
@@ -17,12 +23,10 @@ export function RecallPanel() {
   const [flipped, setFlipped] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [lastTopic, setLastTopic] = useState<string | null>(null);
-
-  const [cardTopic, setCardTopic] = useState('');
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Card | null>(null);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [cardSearch, setCardSearch] = useState('');
 
   const topics = useMemo(() => {
     const list: string[] = [];
@@ -42,7 +46,9 @@ export function RecallPanel() {
         (card) => (card.lapse || 0) >= 2 && (!topicFilter || card.topic === topicFilter)
       );
     }
-    return data.cards.filter((card) => card.due <= today() && (!topicFilter || card.topic === topicFilter));
+    return data.cards.filter(
+      (card) => card.due <= today() && (!topicFilter || card.topic === topicFilter)
+    );
   }, [data.cards, mode, topicFilter]);
 
   const current = useMemo(() => {
@@ -63,12 +69,22 @@ export function RecallPanel() {
       const other = dueCards.filter((card) => card.topic !== lastTopic);
       if (other.length) pool = other;
     }
-    const picked =
-      mode === 'due'
-        ? pool[0]
-        : pool[Math.floor(Math.random() * pool.length)];
+    const picked = mode === 'due' ? pool[0] : pool[Math.floor(Math.random() * pool.length)];
     setCurrentId(picked.id);
   }, [dueCards, flipped, currentId, mode, lastTopic]);
+
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setEditing(null);
+  };
+
+  useEffect(() => {
+    if (fabRequest <= 0) return;
+    setEditing(null);
+    setDialogOpen(true);
+    onFabHandled();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fabRequest]);
 
   const rate = (remembered: boolean) => {
     if (!current) return;
@@ -76,6 +92,11 @@ export function RecallPanel() {
     update((draft) => {
       const card = draft.cards.find((item) => item.id === current.id);
       if (!card) return;
+      draft.reviews.unshift({
+        id: uid(),
+        day: today(),
+        createdAt: new Date().toISOString()
+      });
       card.lapse = Math.max(0, (card.lapse || 0) + (remembered ? -1 : 1));
       card.box = remembered ? Math.min(card.box + 1, BOX_GAPS.length - 1) : 0;
       card.due = remembered ? addDays(today(), Math.max(BOX_GAPS[card.box], 1)) : today();
@@ -89,46 +110,37 @@ export function RecallPanel() {
     notify(remembered ? 'Kartu naik satu kotak.' : 'Kartu ditahan, besok diulang lagi.', 'ok');
   };
 
-  const saveCard = () => {
-    if (!question.trim() || !answer.trim()) {
-      notify('Pertanyaan dan jawaban wajib diisi.', 'bad');
-      return;
-    }
+  const saveCard = (
+    values: { question: string; answer: string; topic: string },
+    again: boolean
+  ) => {
     update((draft) => {
-      if (editingId) {
-        const card = draft.cards.find((item) => item.id === editingId);
+      if (editing) {
+        const card = draft.cards.find((item) => item.id === editing.id);
         if (card) {
-          card.question = question.trim();
-          card.answer = answer.trim();
-          card.topic = cardTopic.trim();
+          card.question = values.question;
+          card.answer = values.answer;
+          card.topic = values.topic;
         }
       } else {
         draft.cards.push({
           id: uid(),
-          question: question.trim(),
-          answer: answer.trim(),
-          topic: cardTopic.trim(),
+          question: values.question,
+          answer: values.answer,
+          topic: values.topic,
           box: 0,
           lapse: 0,
           due: today()
         });
       }
     });
-    notify(editingId ? 'Kartu diperbarui.' : 'Kartu disimpan.', 'ok');
-    setQuestion('');
-    setAnswer('');
-    setCardTopic('');
-    setEditingId(null);
-    setFlipped(false);
-  };
-
-  const startEdit = () => {
-    if (!current) return;
-    setEditingId(current.id);
-    setQuestion(current.question);
-    setAnswer(current.answer);
-    setCardTopic(current.topic);
-    document.getElementById('cq')?.focus();
+    notify(editing ? 'Kartu diperbarui.' : 'Kartu disimpan.', 'ok');
+    if (again) {
+      setEditing(null);
+    } else {
+      closeDialog();
+      setFlipped(false);
+    }
   };
 
   const removeCard = (id: string) => {
@@ -136,22 +148,27 @@ export function RecallPanel() {
       draft.cards = draft.cards.filter((card) => card.id !== id);
     });
     if (currentId === id) setCurrentId(null);
-    if (editingId === id) {
-      setEditingId(null);
-      setQuestion('');
-      setAnswer('');
-      setCardTopic('');
+    if (editing?.id === id) {
+      setEditing(null);
+      setQuestionReset();
     }
     setFlipped(false);
     notify('Kartu dihapus.', 'ok');
     setPendingDelete(null);
   };
 
-  const switchMode = (next: DeckMode) => {
-    setMode(next);
-    setFlipped(false);
-    setCurrentId(null);
+  const setQuestionReset = () => {
+    setEditing(null);
+    setDialogOpen(false);
   };
+
+  const filteredCards = useMemo(() => {
+    const needle = cardSearch.trim().toLowerCase();
+    if (!needle) return data.cards;
+    return data.cards.filter((card) =>
+      `${card.question} ${card.answer} ${card.topic}`.toLowerCase().includes(needle)
+    );
+  }, [data.cards, cardSearch]);
 
   return (
     <>
@@ -159,7 +176,11 @@ export function RecallPanel() {
         <button
           type="button"
           className={`btn ${mode === 'due' ? 'on' : ''}`}
-          onClick={() => switchMode('due')}
+          onClick={() => {
+            setMode('due');
+            setFlipped(false);
+            setCurrentId(null);
+          }}
           aria-pressed={mode === 'due'}
         >
           Jatuh tempo ({dueCount})
@@ -167,7 +188,11 @@ export function RecallPanel() {
         <button
           type="button"
           className={`btn ${mode === 'hard' ? 'on' : ''}`}
-          onClick={() => switchMode('hard')}
+          onClick={() => {
+            setMode('hard');
+            setFlipped(false);
+            setCurrentId(null);
+          }}
           aria-pressed={mode === 'hard'}
         >
           Sulit diingat ({hardCount})
@@ -175,7 +200,11 @@ export function RecallPanel() {
         <button
           type="button"
           className={`btn ${mode === 'mix' ? 'on' : ''}`}
-          onClick={() => switchMode('mix')}
+          onClick={() => {
+            setMode('mix');
+            setFlipped(false);
+            setCurrentId(null);
+          }}
           aria-pressed={mode === 'mix'}
         >
           Campur topik ({dueCount})
@@ -260,7 +289,14 @@ export function RecallPanel() {
               </>
             )}
             <div>
-              <button type="button" className="chip" onClick={startEdit}>
+              <button
+                type="button"
+                className="chip"
+                onClick={() => {
+                  setEditing(current);
+                  setDialogOpen(true);
+                }}
+              >
                 Edit kartu
               </button>{' '}
               <button type="button" className="chip" onClick={() => setPendingDelete(current.id)}>
@@ -268,12 +304,7 @@ export function RecallPanel() {
               </button>
             </div>
           </>
-        ) : (
-          <>
-            <div className="q">Belum ada kartu untuk ditagih</div>
-            <div>Pilih mode lain atau tambahkan kartu baru di bawah.</div>
-          </>
-        )}
+        ) : null}
       </div>
 
       <div className="boxes" id="boxes">
@@ -284,45 +315,77 @@ export function RecallPanel() {
         ))}
       </div>
 
-      <div className="card" style={{ marginTop: 18 }}>
-        <h3>{editingId ? 'Edit kartu' : 'Tambah kartu'}</h3>
-        <label htmlFor="cqt">Topik (opsional)</label>
-        <input
-          id="cqt"
-          list="tpl"
-          value={cardTopic}
-          onChange={(event) => setCardTopic(event.target.value)}
-          placeholder="Contoh: Kriptografi"
-        />
-        <label htmlFor="cq">Pertanyaan</label>
-        <input id="cq" value={question} onChange={(event) => setQuestion(event.target.value)} />
-        <label htmlFor="ca">Jawaban</label>
-        <textarea
-          id="ca"
-          value={answer}
-          onChange={(event) => setAnswer(event.target.value)}
-          style={{ minHeight: 70 }}
-        />
-        <p style={{ margin: '12px 0 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button" className="btn s" id="addCard" onClick={saveCard}>
-            {editingId ? 'Simpan perubahan' : 'Simpan kartu'}
-          </button>
-          {editingId ? (
-            <button
-              type="button"
-              className="btn alt"
-              onClick={() => {
-                setEditingId(null);
-                setQuestion('');
-                setAnswer('');
-                setCardTopic('');
-              }}
-            >
-              Batal edit
-            </button>
-          ) : null}
-        </p>
+      <div style={{ marginTop: 18 }}>
+        <button
+          type="button"
+          className="btn s"
+          id="newC"
+          onClick={() => {
+            setEditing(null);
+            setDialogOpen(true);
+          }}
+        >
+          + Tambah kartu
+        </button>
       </div>
+
+      <details className="card" id="allC" style={{ marginTop: 18 }}>
+        <summary style={{ cursor: 'pointer', fontWeight: 800 }}>
+          Semua kartu (<span id="nC">{data.cards.length}</span>)
+        </summary>
+        <input
+          id="cs"
+          type="search"
+          placeholder="Cari kartu..."
+          aria-label="Cari kartu"
+          style={{ margin: '12px 0' }}
+          value={cardSearch}
+          onChange={(event) => setCardSearch(event.target.value)}
+        />
+        <div id="clist">
+          {filteredCards.length ? (
+            filteredCards.map((card) => (
+              <div className="clist-row" key={card.id}>
+                <span>
+                  {card.question}
+                  {card.topic ? (
+                    <>
+                      {' '}
+                      <small>· {card.topic}</small>
+                    </>
+                  ) : null}
+                </span>
+                <span>
+                  <button
+                    type="button"
+                    className="chip"
+                    onClick={() => {
+                      setEditing(card);
+                      setDialogOpen(true);
+                    }}
+                  >
+                    Edit
+                  </button>{' '}
+                  <button type="button" className="chip" onClick={() => setPendingDelete(card.id)}>
+                    Hapus
+                  </button>
+                </span>
+              </div>
+            ))
+          ) : (
+            <p style={{ margin: '8px 0 0', fontWeight: 600 }}>Belum ada kartu.</p>
+          )}
+        </div>
+      </details>
+
+      <CardDialog
+        open={dialogOpen}
+        card={editing}
+        defaultTopic={topicFilter}
+        topics={topics}
+        onClose={closeDialog}
+        onSave={saveCard}
+      />
 
       <ConfirmDialog
         open={pendingDelete !== null}

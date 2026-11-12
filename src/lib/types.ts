@@ -31,6 +31,13 @@ export interface FocusSession {
   createdAt: string;
 }
 
+/** Satu kali pengulangan kartu, dipakai untuk statistik progres. */
+export interface ReviewRecord {
+  id: string;
+  day: string;
+  createdAt: string;
+}
+
 export interface JournalEntry {
   id: string;
   day: string;
@@ -40,18 +47,31 @@ export interface JournalEntry {
   createdAt: string;
 }
 
+/** Item ceklis harian, bisa ditambah dan diubah sendiri oleh pengguna. */
+export interface ChecklistItem {
+  id: string;
+  text: string;
+}
+
+export type Theme = 'light' | 'dark';
+
 export interface Settings {
   focusMinutes: number;
   diffuseMinutes: number;
+  /** null berarti mengikuti setelan sistem. */
+  theme: Theme | null;
+  seen: boolean;
 }
 
 export interface Dataset {
   notes: Note[];
   cards: Card[];
   sessions: FocusSession[];
+  reviews: ReviewRecord[];
   journal: JournalEntry[];
   /** day -> id item -> sudah dicek */
   checklist: Record<string, Record<string, boolean>>;
+  checklistItems: ChecklistItem[];
   settings: Settings;
 }
 
@@ -61,6 +81,8 @@ export interface Store {
   mode: StoreMode;
   load(): Promise<Dataset>;
   save(dataset: Dataset): Promise<void>;
+  /** Menghapus seluruh data pengguna. */
+  wipe(): Promise<void>;
 }
 
 export const NOTE_COLORS: Record<NoteColor, string> = {
@@ -74,16 +96,25 @@ export const NOTE_COLORS: Record<NoteColor, string> = {
 
 export const NOTE_KINDS: NoteKind[] = ['Chunk', 'Analogi', 'Pertanyaan', 'Kesalahan'];
 
+export const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  { id: 'd0', text: 'Tidur cukup semalam' },
+  { id: 'd1', text: 'Satu sesi fokus tanpa HP' },
+  { id: 'd2', text: 'Satu sesi recall tanpa lihat materi' },
+  { id: 'd3', text: 'Gerak badan atau jalan kaki' },
+  { id: 'd4', text: 'Ulang kartu yang jatuh tempo' }
+];
+
+/** Peta id item lama ke id baru, supaya data tersimpan sebelumnya tetap nyambung. */
+export const LEGACY_CHECKLIST_IDS: Record<string, string> = {
+  sleep: 'd0',
+  noPhone: 'd1',
+  recall: 'd2',
+  walk: 'd3',
+  cards: 'd4'
+};
+
 /** Jarak ulangan kartu (Leitner): makin tinggi kotaknya, makin jarang kartu muncul. */
 export const BOX_GAPS = [0, 1, 3, 7, 14];
-
-export const CHECKLIST_ITEMS = [
-  { id: 'sleep', label: 'Tidur cukup semalam' },
-  { id: 'noPhone', label: 'Satu sesi fokus tanpa HP' },
-  { id: 'recall', label: 'Satu sesi recall tanpa lihat materi' },
-  { id: 'walk', label: 'Gerak badan atau jalan kaki' },
-  { id: 'cards', label: 'Ulang kartu yang jatuh tempo' }
-];
 
 export const PRINCIPLES: Array<{ title: string; color: NoteColor; body: string }> = [
   {

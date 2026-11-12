@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useData } from '../../state/useData';
 import { useToast } from '../../components/ToastProvider';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { formatClock, today } from '../../lib/date';
 import { uid } from '../../lib/id';
-import { TIMER_HINTS } from '../../lib/types';
+import { DEFAULT_CHECKLIST, TIMER_HINTS, type ChecklistItem } from '../../lib/types';
 
 type Mode = 'focus' | 'diffuse';
 
@@ -13,7 +14,7 @@ const PRESETS = [
   { value: '15,3', label: '15 / 3 menit' }
 ];
 
-export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
+export function FocusPanel() {
   const { data, update } = useData();
   const { notify } = useToast();
 
@@ -33,6 +34,10 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
   const [hardest, setHardest] = useState('');
   const [understood, setUnderstood] = useState('');
   const [tomorrow, setTomorrow] = useState('');
+
+  const [editingChecklist, setEditingChecklist] = useState(false);
+  const [newItem, setNewItem] = useState('');
+  const [pendingRemoveItem, setPendingRemoveItem] = useState<string | null>(null);
 
   useEffect(() => {
     modeRef.current = mode;
@@ -54,7 +59,9 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
 
   const beep = useCallback(() => {
     try {
-      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const Ctor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = audioRef.current ?? new Ctor();
       audioRef.current = ctx;
       void ctx.resume();
@@ -76,7 +83,9 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
     try {
       if (window.Notification && Notification.permission === 'granted') {
         new Notification(
-          modeRef.current === 'focus' ? 'Sesi fokus selesai. Saatnya santai!' : 'Istirahat selesai. Ayo fokus lagi!'
+          modeRef.current === 'focus'
+            ? 'Sesi fokus selesai. Saatnya santai!'
+            : 'Istirahat selesai. Ayo fokus lagi!'
         );
       }
     } catch {
@@ -84,36 +93,32 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
     }
   }, []);
 
-  const recordSession = useCallback(
-    (minutes: number, which: Mode) => {
-      if (which !== 'focus' || minutes < 1) return;
+  const finish = useCallback(() => {
+    const finishedMode = modeRef.current;
+    if (finishedMode === 'focus') {
       update((draft) => {
         draft.sessions.unshift({
           id: uid(),
           day: today(),
-          minutes,
+          minutes: Math.round(durationOf(finishedMode) / 60),
           mode: 'focus',
           topic: topicRef.current,
           createdAt: new Date().toISOString()
         });
       });
-    },
-    [update]
-  );
-
-  const finish = useCallback(() => {
-    const finishedMode = modeRef.current;
-    recordSession(Math.round(durationOf(finishedMode) / 60), finishedMode);
+    }
     beep();
     const nextMode: Mode = finishedMode === 'focus' ? 'diffuse' : 'focus';
     setMode(nextMode);
     setLeft(durationOf(nextMode));
     setRunning(false);
     notify(
-      finishedMode === 'focus' ? 'Sesi fokus selesai. Saatnya santai!' : 'Istirahat selesai. Ayo fokus lagi!',
+      finishedMode === 'focus'
+        ? 'Sesi fokus selesai. Saatnya santai!'
+        : 'Istirahat selesai. Ayo fokus lagi!',
       'ok'
     );
-  }, [beep, durationOf, notify, recordSession]);
+  }, [beep, durationOf, notify, update]);
 
   useEffect(() => {
     if (!running) return;
@@ -134,7 +139,9 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
 
   const prepareAudio = () => {
     try {
-      const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const Ctor =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = audioRef.current ?? new Ctor();
       audioRef.current = ctx;
       void ctx.resume();
@@ -156,9 +163,7 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
     setRunning(true);
   };
 
-  const pause = () => {
-    setRunning(false);
-  };
+  const pause = () => setRunning(false);
 
   const reset = () => {
     setRunning(false);
@@ -178,8 +183,7 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
       draft.settings.diffuseMinutes = diffuse;
     });
     setRunning(false);
-    const which = mode;
-    setLeft(which === 'focus' ? focus * 60 : diffuse * 60);
+    setLeft(mode === 'focus' ? focus * 60 : diffuse * 60);
   };
 
   const startQuickFive = () => {
@@ -188,15 +192,6 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
     setLeft(300);
     endAtRef.current = Date.now() + 300 * 1000;
     setRunning(true);
-  };
-
-  const stopAndSave = () => {
-    const elapsed = durationOf(mode) - left;
-    const minutes = Math.max(1, Math.round(elapsed / 60));
-    setRunning(false);
-    recordSession(minutes, mode);
-    setLeft(durationOf(mode));
-    notify(`Sesi dicatat: ${minutes} menit`, 'ok');
   };
 
   const saveSessionNote = () => {
@@ -222,7 +217,6 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
     setPre('');
     setSessLog('');
     notify('Catatan sesi disimpan di tab Catatan.', 'ok');
-    onGoToNotes();
   };
 
   const saveJournal = () => {
@@ -252,13 +246,84 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
     });
   };
 
+  const checklist = data.checklistItems.length ? data.checklistItems : DEFAULT_CHECKLIST;
+  const checkedToday = data.checklist[today()] ?? {};
+  const doneCount = checklist.filter((item) => checkedToday[item.id]).length;
+
+  const toggleItem = (id: string, value: boolean) => {
+    update((draft) => {
+      const record = draft.checklist[today()] ?? {};
+      record[id] = value;
+      draft.checklist[today()] = record;
+    });
+  };
+
+  const renameItem = (id: string, text: string) => {
+    update((draft) => {
+      const item = draft.checklistItems.find((entry) => entry.id === id);
+      if (item) item.text = text;
+    });
+  };
+
+  const addItem = () => {
+    const value = newItem.trim();
+    if (!value) return;
+    update((draft) => {
+      draft.checklistItems.push({ id: `u${uid()}`, text: value });
+    });
+    setNewItem('');
+  };
+
+  const removeItem = (id: string) => {
+    update((draft) => {
+      draft.checklistItems = draft.checklistItems.filter((item) => item.id !== id);
+    });
+    setPendingRemoveItem(null);
+  };
+
+  const resetChecklist = () => {
+    update((draft) => {
+      draft.checklistItems = DEFAULT_CHECKLIST.map((item) => ({ ...item }));
+    });
+    notify('Ceklis dikembalikan ke 5 item bawaan.', 'ok');
+  };
+
   const todaySessions = data.sessions.filter((s) => s.day === today() && s.mode === 'focus');
-  const minutesToday = todaySessions.reduce((sum, s) => sum + (s.minutes || 0), 0);
   const presetValue = `${data.settings.focusMinutes},${data.settings.diffuseMinutes}`;
   const lastJournal = data.journal[0];
 
   return (
     <>
+      {!data.settings.seen ? (
+        <div className="card" id="welcome" style={{ background: 'var(--y)', marginBottom: 18 }}>
+          <h3>Selamat datang</h3>
+          <p style={{ margin: '6px 0' }}>
+            Alat belajar ini memakai ide dari <i>Learning How to Learn</i>. Alurnya:
+          </p>
+          <ol style={{ margin: '0 0 10px', paddingLeft: 20, fontWeight: 600 }}>
+            <li>Mulai sesi fokus, lalu istirahat santai.</li>
+            <li>Tulis ingatanmu dari kepala sendiri di Catatan.</li>
+            <li>Ulang kartu di Recall secara berkala.</li>
+            <li>Tutup hari dengan jurnal refleksi.</li>
+          </ol>
+          <p style={{ margin: '0 0 10px', fontWeight: 600 }}>
+            Semua data hanya tersimpan di browser ini. Pakai Cadangkan data secara rutin.
+          </p>
+          <button
+            type="button"
+            className="btn"
+            id="wok"
+            onClick={() =>
+              update((draft) => {
+                draft.settings.seen = true;
+              })
+            }
+          >
+            Mengerti, mulai
+          </button>
+        </div>
+      ) : null}
+
       <div className={`card timer ${mode}`} id="timerCard">
         <div className="mode" role="group" aria-label="Mode timer">
           <button
@@ -290,11 +355,6 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
           <button type="button" className="btn alt" id="reset" onClick={reset}>
             Atur ulang
           </button>
-          {running ? (
-            <button type="button" className="btn alt" onClick={stopAndSave}>
-              Selesai &amp; catat
-            </button>
-          ) : null}
         </div>
 
         <p className="hint" id="hint">
@@ -327,7 +387,6 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
 
         <div className="stat">
           <span id="sessN">{todaySessions.length} sesi fokus hari ini</span>
-          {minutesToday > 0 ? <span>{minutesToday} menit hari ini</span> : null}
         </div>
       </div>
 
@@ -341,7 +400,9 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
           onChange={(event) => setTopic(event.target.value)}
           placeholder="Contoh: Bab 3 jaringan komputer"
         />
-        <label htmlFor="pre">Sebelum belajar: tebak apa yang akan kamu pelajari atau sudah kamu ketahui</label>
+        <label htmlFor="pre">
+          Sebelum belajar: tebak apa yang akan kamu pelajari atau sudah kamu ketahui
+        </label>
         <textarea
           id="pre"
           value={pre}
@@ -350,7 +411,8 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
           placeholder="Tebakan yang salah pun tidak apa-apa. Ini menyiapkan otakmu."
         />
         <label htmlFor="sessLog">
-          Setelah selesai: tulis yang kamu ingat tanpa melihat materi, lalu bandingkan dengan tebakan awalmu
+          Setelah selesai: tulis yang kamu ingat tanpa melihat materi, lalu bandingkan dengan tebakan
+          awalmu
         </label>
         <textarea
           id="sessLog"
@@ -365,7 +427,93 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
         </p>
       </div>
 
-      <div className="card tinted" style={{ marginTop: 18, background: 'var(--l)' }}>
+      <div className="card chk" id="ccard" style={{ marginTop: 18, background: 'var(--y)' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap'
+          }}
+        >
+          <h3>
+            Ceklis hari ini <small id="cprog">({doneCount}/{checklist.length})</small>
+          </h3>
+          <button
+            type="button"
+            className="chip"
+            id="cedit"
+            onClick={() => setEditingChecklist((prev) => !prev)}
+          >
+            {editingChecklist ? 'Selesai' : 'Ubah ceklis'}
+          </button>
+        </div>
+
+        <div id="chk">
+          {checklist.length ? (
+            checklist.map((item: ChecklistItem) =>
+              editingChecklist ? (
+                <div className="chk-edit" key={item.id}>
+                  <input
+                    value={item.text}
+                    aria-label="Nama item"
+                    onChange={(event) => renameItem(item.id, event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="chip"
+                    onClick={() => setPendingRemoveItem(item.id)}
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ) : (
+                <label key={item.id}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(checkedToday[item.id])}
+                    onChange={(event) => toggleItem(item.id, event.target.checked)}
+                  />
+                  {item.text}
+                </label>
+              )
+            )
+          ) : (
+            <p style={{ margin: '6px 0', fontWeight: 600 }}>
+              Ceklis kosong. Tekan Ubah ceklis untuk menambah item.
+            </p>
+          )}
+        </div>
+
+        <div id="cform" hidden={!editingChecklist} style={{ marginTop: 10 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              id="cnew"
+              placeholder="Item baru..."
+              aria-label="Item baru"
+              value={newItem}
+              onChange={(event) => setNewItem(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  addItem();
+                }
+              }}
+            />
+            <button type="button" className="btn" id="cadd" onClick={addItem}>
+              Tambah
+            </button>
+          </div>
+          <p style={{ margin: '10px 0 0' }}>
+            <button type="button" className="chip" id="creset" onClick={resetChecklist}>
+              Kembalikan bawaan
+            </button>
+          </p>
+        </div>
+      </div>
+
+      <div className="card" id="jcard" style={{ marginTop: 18, background: 'var(--l)' }}>
         <h3>Jurnal refleksi</h3>
         <p id="jplan" style={{ margin: '4px 0 0', fontWeight: 700 }}>
           {lastJournal?.tomorrow ? `Rencanamu (${lastJournal.day}): ${lastJournal.tomorrow}` : ''}
@@ -401,6 +549,14 @@ export function FocusPanel({ onGoToNotes }: { onGoToNotes: () => void }) {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={pendingRemoveItem !== null}
+        title="Hapus item ini?"
+        message="Item akan dihapus dari daftar ceklis harian."
+        onCancel={() => setPendingRemoveItem(null)}
+        onConfirm={() => pendingRemoveItem && removeItem(pendingRemoveItem)}
+      />
     </>
   );
 }

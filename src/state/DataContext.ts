@@ -11,6 +11,7 @@ export interface DataContextValue {
   update: (mutate: (draft: Dataset) => void) => void;
   replaceAll: (next: Dataset) => void;
   reload: () => void;
+  wipe: () => Promise<void>;
   saveState: SaveState;
   storeMode: StoreMode;
 }
