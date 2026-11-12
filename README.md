@@ -1,10 +1,10 @@
 # Learn with Erashi
 
 Alat belajar pribadi yang memakai prinsip dari *Learning How to Learn* (Brown, Roediger & McDaniel):
-timer fokus dan santai, catatan ber-chunk, kartu recall berjarak (Leitner), dan jurnal refleksi harian.
-Diusulkan ulang dari berkas `belajar-cara-belajar (2).html` yang Lampiran, dengan seluruh fungsi
-dipertahankan dan ditambah beberapa hal: sinkronisasi Supabase, mode gelap, pencarian catatan,
-dialog konfirmasi hapus, serta state kosong/memuat/error.
+timer fokus dan santai, catatan ber-chunk, kartu recall berjarak (Leitner), jurnal refleksi harian,
+dan statistik progres. Diusulkan ulang dari berkas `belajar-cara-belajar (3).html` yang Lampiran,
+dengan brand Learn with Erashi dan tambahan: sinkronisasi Supabase, mode gelap yang mengikuti
+sistem, state kosong/memuat/error, dan dialog konfirmasi yang bisa diakses keyboard.
 
 **Live:** https://learn-with-erashi.vercel.app
 **Kode:** https://github.com/Lyand216/learn-with-erashi
@@ -24,11 +24,12 @@ Tanpa konfigurasi apa pun, aplikasi langsung jalan dan menyimpan data di `localS
 
 | Tab | Fungsi |
 | --- | --- |
-| Fokus & santai | Timer fokus/santai (25/5, 50/10, 15/3, atau 5 menit sekali jalan), bunyi penanda, notifikasi browser, judul tab ikut berubah, hitungan sesi dan menit hari ini, tombol "Selesai & catat" untuk menyimpan sesi lebih awal, catatan sesi (tebakan awal + ingatan setelah belajar) yang otomatis jadi kartu catatan, jurnal refleksi harian dengan daftar 5 entri terakhir dan rencana besok |
-| Catatan | Tambah, edit, hapus, ganti warna, filter per topik, pencarian isi, ubah catatan jadi kartu recall, jumlah catatan |
-| Recall | Deck Leitner 5 kotak (jarak 0/1/3/7/14 hari), mode jatuh tempo / sulit diingat / campur topik, filter topik, balik kartu, tombol Ingat/Lupa, tambah dan edit kartu, ringkasan isi tiap kotak |
-| Prinsip | Ceklis 5 habit harian, 9 kartu prinsip belajar |
-| Semua | Cadangkan data ke file JSON, pulihkan data dari file JSON (format baru maupun format file HTML lama), mode terang/gelap, lencana status penyimpanan |
+| Fokus | Timer fokus/santai (25/5, 50/10, 15/3, atau 5 menit sekali jalan), bunyi penanda, notifikasi browser, judul tab ikut berubah, hitungan sesi hari ini, catatan sesi (tebakan awal + ingatan setelah belajar) yang otomatis jadi catatan, ceklis harian yang bisa diedit sendiri, jurnal refleksi dengan daftar 5 entri terakhir dan rencana besok, kartu Selamat datang untuk pengguna baru |
+| Catatan | Tombol "+ Tambah catatan" membuka dialog, edit dan hapus lewat dialog, ganti warna, filter per topik, pencarian isi, ubah catatan jadi kartu recall, tombol mengambang di layar HP |
+| Recall | Deck Leitner 5 kotak (jarak 0/1/3/7/14 hari), mode jatuh tempo / sulit diingat / campur topik, filter topik, balik kartu, tombol Ingat/Lupa, tambah kartu lewat dialog (termasuk "Simpan & tambah lagi"), daftar Semua kartu dengan pencarian, tombol mengambang di layar HP |
+| Progres | Streak hari berturut-turut, total sesi fokus, total kartu diulang, jumlah catatan dan kartu, grafik batang 7 hari terakhir |
+| Prinsip | Sembilan kartu prinsip belajar |
+| Semua | Tombol Tema (mengikuti sistem sampai dipilih manual), cadangkan data ke file JSON, pulihkan data dari file JSON (format baru maupun format file HTML lama), tombol Hapus semua data, navigasi tab memakai tombol panah, baris navigasi tetap di bawah pada layar HP |
 
 ## Deploy
 
