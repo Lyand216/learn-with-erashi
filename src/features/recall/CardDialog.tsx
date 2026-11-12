@@ -29,6 +29,10 @@ export function CardDialog({ open, card, defaultTopic, topics, onClose, onSave }
       { question: question.trim(), answer: answer.trim(), topic: topic.trim() },
       again
     );
+    if (again) {
+      setQuestion('');
+      setAnswer('');
+    }
   };
 
   return (

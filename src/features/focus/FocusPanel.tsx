@@ -15,7 +15,7 @@ const PRESETS = [
 ];
 
 export function FocusPanel() {
-  const { data, update } = useData();
+  const { data, update, storeMode } = useData();
   const { notify } = useToast();
 
   const [mode, setMode] = useState<Mode>('focus');
@@ -307,7 +307,9 @@ export function FocusPanel() {
             <li>Tutup hari dengan jurnal refleksi.</li>
           </ol>
           <p style={{ margin: '0 0 10px', fontWeight: 600 }}>
-            Semua data hanya tersimpan di browser ini. Pakai Cadangkan data secara rutin.
+            {storeMode === 'cloud'
+              ? 'Semua data tersimpan di akunmu dan bisa dibuka di perangkat lain. Pakai Cadangkan data secara rutin.'
+              : 'Semua data hanya tersimpan di browser ini. Pakai Cadangkan data secara rutin.'}
           </p>
           <button
             type="button"
