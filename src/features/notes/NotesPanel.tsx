@@ -67,6 +67,12 @@ export function NotesPanel({ fabRequest, onFabHandled }: NotesPanelProps) {
     body: string;
     color: NoteColor;
   }) => {
+    // Penjaga kedua: walau dialog lolos dengan isian kosong, catatan kosong
+    // tidak pernah dibuat.
+    if (!values.title.trim() && !values.body.trim()) {
+      notify('Isi judul atau isi catatan dulu.', 'bad');
+      return;
+    }
     update((draft) => {
       if (editing) {
         const target = draft.notes.find((note) => note.id === editing.id);
